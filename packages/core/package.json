@@ -1,5 +1,6 @@
 {
   "name": "@struktos/core",
+  "type": "module",
   "version": "1.0.0-alpha.1",
   "description": "Struktos.js Core - Hexagonal Architecture Framework with DDD, CQRS, and Unit of Work patterns",
   "author": "Struktos.js Team <team@struktos.dev>",

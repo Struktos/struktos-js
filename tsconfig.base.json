@@ -26,8 +26,8 @@
   "compilerOptions": {
     "target": "ES2022",
     "lib": ["ES2022"],
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "module": "esnext",
+    "moduleResolution": "bundler",
 
     "strict": true,
     "strictNullChecks": true,
@@ -62,7 +62,7 @@
 
     "skipLibCheck": true,
 
-    "incremental": true,
+    //"incremental": true,
 
     "baseUrl": ".",
     "paths": {

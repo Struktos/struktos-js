@@ -1,28 +1,5 @@
 {
   "$schema": "https://turbo.build/schema.json",
-
-  "_comment_vision": [
-    "============================================================================",
-    "Struktos.js ADaaS Platform - Turborepo Pipeline Configuration",
-    "============================================================================",
-    "",
-    "🎯 Purpose:",
-    "Defines the build pipeline, task dependencies, and caching strategy for",
-    "the Struktos.js monorepo. Turborepo ensures optimal build performance",
-    "through intelligent caching and parallel task execution.",
-    "",
-    "🏛️ ADaaS Vision Alignment:",
-    "- Deterministic builds for enterprise-grade reliability",
-    "- Cached artifacts for H100 cluster optimization",
-    "- Strict dependency ordering for Hexagonal Architecture integrity",
-    "",
-    "📐 Hexagonal Architecture Enforcement:",
-    "- packages/core MUST build before all adapters",
-    "- packages/architecture provides validation rules consumed by all",
-    "- apps depend on packages (never reverse)",
-    "============================================================================"
-  ],
-
   "globalDependencies": [".env", "tsconfig.base.json"],
 
   "globalEnv": ["NODE_ENV", "CI"],

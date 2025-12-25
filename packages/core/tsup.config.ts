@@ -20,22 +20,26 @@ export default defineConfig({
   // Entry Points
   // Maps to the package.json exports field
   // ─────────────────────────────────────────────────────────────────────────
-  entry: {
-    index: 'src/index.ts',
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    'domain/index': 'src/domain/index.ts',
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    'application/index': 'src/application/index.ts',
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    'infrastructure/index': 'src/infrastructure/index.ts',
-  },
+  // entry: {
+  //   index: 'src/index.ts',
+  //   // eslint-disable-next-line @typescript-eslint/naming-convention
+  //   'domain/index': 'src/domain/index.ts',
+  //   // eslint-disable-next-line @typescript-eslint/naming-convention
+  //   'application/index': 'src/application/index.ts',
+  //   // eslint-disable-next-line @typescript-eslint/naming-convention
+  //   'infrastructure/index': 'src/infrastructure/index.ts',
+  // },
+  entry: ['src/index.ts'],
 
   // ─────────────────────────────────────────────────────────────────────────
   // Output Configuration
   // ─────────────────────────────────────────────────────────────────────────
   format: ['cjs', 'esm'],
-  dts: true,
-  splitting: false,
+  dts: {
+    resolve: true,
+    entry: 'src/index.ts',
+  },
+  splitting: true,
   sourcemap: true,
   clean: true,
   treeshake: true,

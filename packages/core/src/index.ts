@@ -12,10 +12,21 @@
  *
  * @example
  * ```typescript
- * import { createApp, IUnitOfWork, ICommand } from '@struktos/core';
+ * import {
+ *   RequestContext,
+ *   ContextKey,
+ *   TRACE_ID_KEY,
+ * } from '@struktos/core';
  *
- * const app = createApp();
- * await app.start();
+ * // Define custom keys
+ * const USER_ID = new ContextKey<number>('userId');
+ *
+ * // Create context scope
+ * RequestContext.run({ traceId: 'abc-123' }, async () => {
+ *   const ctx = RequestContext.current();
+ *   ctx?.set(USER_ID, 42);
+ *   console.log(ctx?.get(TRACE_ID_KEY)); // 'abc-123'
+ * });
  * ```
  */
 
@@ -23,25 +34,55 @@
 // Domain Layer Exports
 // Pure business logic - NO external dependencies
 // ============================================================================
-export type * from './domain';
+//export * from './domain';
 
 // ============================================================================
 // Application Layer Exports
 // Use case orchestration, CQRS, DI
 // ============================================================================
-export type * from './application';
+//export * from './application';
 
 // ============================================================================
 // Infrastructure Layer Exports
 // External concerns, adapters, middleware
 // ============================================================================
-export type * from './infrastructure';
+//export * from './infrastructure';
 
 // ============================================================================
 // Common Exports
 // Shared types, utilities, constants
 // ============================================================================
-export type * from './common';
+//export * from './common';
+
+// ============================================================================
+// Convenience Re-exports (Most commonly used)
+// ============================================================================
+
+// Context - Most important for day-to-day usage
+export {
+  ContextKey,
+  TRACE_ID_KEY,
+  REQUEST_ID_KEY,
+  USER_ID_KEY,
+  TIMESTAMP_KEY,
+  type IContext,
+  type IContextProvider,
+  type IStruktosContextData,
+} from './domain/context';
+
+export {
+  RequestContext,
+  RequestContextProvider,
+  RequestContextProxy,
+  getCurrentContext,
+  requireContext,
+} from './infrastructure/context';
+
+export {
+  AutoContextBehavior,
+  type IPipelineBehavior,
+  type IHandlerContext,
+} from './application/context';
 
 // ============================================================================
 // Version

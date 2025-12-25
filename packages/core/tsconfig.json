@@ -10,20 +10,16 @@
   ],
 
   "extends": "../../tsconfig.base.json",
-
   "compilerOptions": {
-    "rootDir": "./src",
     "outDir": "./dist",
-    "composite": true,
-    "declarationDir": "./dist",
-
+    "rootDir": "./src",
     "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"]
-    }
+    "paths": {},
+    "composite": false,
+    "incremental": false,
+    "declaration": true,
+    "emitDeclarationOnly": false
   },
-
-  "include": ["src/**/*.ts"],
-
-  "exclude": ["node_modules", "dist", "coverage", "**/*.test.ts", "**/*.spec.ts"]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.spec.ts", "vitest.config.ts"]
 }
