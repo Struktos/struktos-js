@@ -1,0 +1,99 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+
+  "_comment_vision": [
+    "============================================================================",
+    "Struktos.js ADaaS Platform - Turborepo Pipeline Configuration",
+    "============================================================================",
+    "",
+    "🎯 Purpose:",
+    "Defines the build pipeline, task dependencies, and caching strategy for",
+    "the Struktos.js monorepo. Turborepo ensures optimal build performance",
+    "through intelligent caching and parallel task execution.",
+    "",
+    "🏛️ ADaaS Vision Alignment:",
+    "- Deterministic builds for enterprise-grade reliability",
+    "- Cached artifacts for H100 cluster optimization",
+    "- Strict dependency ordering for Hexagonal Architecture integrity",
+    "",
+    "📐 Hexagonal Architecture Enforcement:",
+    "- packages/core MUST build before all adapters",
+    "- packages/architecture provides validation rules consumed by all",
+    "- apps depend on packages (never reverse)",
+    "============================================================================"
+  ],
+
+  "globalDependencies": [".env", "tsconfig.base.json"],
+
+  "globalEnv": ["NODE_ENV", "CI"],
+
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": ["src/**", "tsconfig.json", "tsup.config.ts", "package.json"],
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**"],
+      "cache": true,
+      "persistent": false
+    },
+
+    "dev": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true
+    },
+
+    "test": {
+      "dependsOn": ["build"],
+      "inputs": ["src/**", "tests/**", "vitest.config.ts", "package.json"],
+      "outputs": ["coverage/**"],
+      "cache": true,
+      "env": ["CI", "NODE_ENV"]
+    },
+
+    "test:unit": {
+      "dependsOn": ["build"],
+      "inputs": ["src/**", "tests/unit/**", "vitest.config.ts"],
+      "outputs": [],
+      "cache": true
+    },
+
+    "test:integration": {
+      "dependsOn": ["build"],
+      "inputs": ["src/**", "tests/integration/**", "vitest.config.ts"],
+      "outputs": [],
+      "cache": false
+    },
+
+    "test:coverage": {
+      "dependsOn": ["build"],
+      "inputs": ["src/**", "tests/**", "vitest.config.ts"],
+      "outputs": ["coverage/**"],
+      "cache": true
+    },
+
+    "lint": {
+      "dependsOn": [],
+      "inputs": ["src/**", "tests/**", "eslint.config.js", "package.json"],
+      "outputs": [],
+      "cache": true
+    },
+
+    "lint:fix": {
+      "dependsOn": [],
+      "inputs": ["src/**", "tests/**"],
+      "outputs": [],
+      "cache": false
+    },
+
+    "typecheck": {
+      "dependsOn": ["^build"],
+      "inputs": ["src/**", "tests/**", "tsconfig.json", "package.json"],
+      "outputs": [],
+      "cache": true
+    },
+
+    "clean": {
+      "cache": false
+    }
+  }
+}

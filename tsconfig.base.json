@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+
+  "_comment": [
+    "============================================================================",
+    "Struktos.js ADaaS Platform - TypeScript Base Configuration",
+    "============================================================================",
+    "",
+    "🎯 Purpose:",
+    "Provides the foundational TypeScript configuration inherited by all packages",
+    "and applications. Enforces strict type safety as mandated by Struktos.js",
+    "design principles.",
+    "",
+    "🏛️ ADaaS Vision Alignment:",
+    "- Enterprise-grade type safety (strict: true)",
+    "- Maximum IDE support for developer experience",
+    "- Clean compilation outputs for production",
+    "",
+    "📐 Hexagonal Architecture Support:",
+    "- Enables decorators for DI (@Injectable, @Inject)",
+    "- Strict null checks prevent domain logic errors",
+    "- Path aliases map to architectural layers",
+    "============================================================================"
+  ],
+
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+
+    "strict": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "exactOptionalPropertyTypes": true,
+    "useUnknownInCatchVariables": true,
+
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": false,
+
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "inlineSources": true,
+
+    "skipLibCheck": true,
+
+    "incremental": true,
+
+    "baseUrl": ".",
+    "paths": {
+      "@struktos/core": ["packages/core/src"],
+      "@struktos/core/*": ["packages/core/src/*"],
+      "@struktos/sknul": ["packages/sknul/src"],
+      "@struktos/sknul/*": ["packages/sknul/src/*"],
+      "@struktos/cli": ["packages/cli/src"],
+      "@struktos/cli/*": ["packages/cli/src/*"],
+      "@struktos/architecture": ["packages/architecture/src"],
+      "@struktos/architecture/*": ["packages/architecture/src/*"],
+      "@struktos/resilience": ["packages/resilience/src"],
+      "@struktos/resilience/*": ["packages/resilience/src/*"],
+      "@struktos/shared": ["packages/shared/src"],
+      "@struktos/shared/*": ["packages/shared/src/*"]
+    }
+  },
+
+  "exclude": ["node_modules", "dist", "coverage", ".turbo", "**/*.spec.ts", "**/*.test.ts"]
+}

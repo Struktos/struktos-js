@@ -1,0 +1,80 @@
+{
+  "name": "struktos-platform",
+  "type": "module",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Struktos.js ADaaS Platform - Next-generation Architecture Development as a Service",
+  "author": "Struktos.js Team <team@struktos.dev>",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/struktos/struktos-platform.git"
+  },
+  "homepage": "https://struktos.dev",
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "──────────────────── BUILD ────────────────────": "",
+    "build": "turbo run build",
+    "build:packages": "turbo run build --filter='./packages/*'",
+    "build:apps": "turbo run build --filter='./apps/*'",
+    "dev": "turbo run dev",
+    "──────────────────── TEST ────────────────────": "",
+    "test": "turbo run test",
+    "test:unit": "turbo run test:unit",
+    "test:integration": "turbo run test:integration",
+    "test:coverage": "turbo run test:coverage",
+    "test:watch": "vitest",
+    "──────────────────── LINT & FORMAT ────────────────────": "",
+    "lint": "turbo run lint",
+    "lint:fix": "turbo run lint:fix",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yaml,yml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yaml,yml}\"",
+    "typecheck": "turbo run typecheck",
+    "──────────────────── ARCHITECTURE GUARD ────────────────────": "",
+    "arch:validate": "depcruise --config .dependency-cruiser.js packages apps",
+    "arch:graph": "depcruise --config .dependency-cruiser.js --output-type dot packages | dot -T svg > architecture-graph.svg",
+    "──────────────────── UTILITIES ────────────────────": "",
+    "clean": "turbo run clean && rm -rf node_modules .turbo",
+    "clean:turbo": "rm -rf .turbo node_modules/.cache/turbo",
+    "prepare": "husky",
+    "──────────────────── RELEASE ────────────────────": "",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "turbo run build --filter='./packages/*' && changeset publish"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.10",
+    "@commitlint/cli": "^19.6.0",
+    "@commitlint/config-conventional": "^19.6.0",
+    "@types/node": "^22.10.2",
+    "@typescript-eslint/eslint-plugin": "^8.18.0",
+    "@typescript-eslint/parser": "^8.18.0",
+    "@vitest/coverage-v8": "^2.1.8",
+    "@vitest/ui": "^2.1.8",
+    "dependency-cruiser": "^16.8.0",
+    "eslint": "^9.16.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.31.0",
+    "globals": "^15.14.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.2.11",
+    "prettier": "^3.4.2",
+    "tsup": "^8.3.5",
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --fix --no-warn-ignored",
+      "prettier --write"
+    ],
+    "*.{json,md,yaml,yml}": [
+      "prettier --write"
+    ]
+  }
+}

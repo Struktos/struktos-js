@@ -1,0 +1,30 @@
+{
+  "name": "@struktos/marketplace-web",
+  "version": "0.1.0-alpha.1",
+  "private": true,
+  "description": "Marketplace Web - ADaaS component marketplace and developer portal",
+  "author": "Struktos.js Team <team@struktos.dev>",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "build": "echo 'TODO: Configure web build (Next.js/Vite)'",
+    "dev": "echo 'TODO: Configure web dev server'",
+    "start": "echo 'TODO: Configure web start'",
+    "test": "vitest run",
+    "test:unit": "vitest run tests/unit",
+    "test:e2e": "echo 'TODO: Configure E2E tests (Playwright)'",
+    "lint": "eslint src --ext .ts,.tsx",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist .next coverage .turbo"
+  },
+  "dependencies": {
+    "@struktos/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json.schemastore.org/prettierrc",
+  
+  "_comment": [
+    "============================================================================",
+    "Struktos.js ADaaS Platform - Prettier Configuration",
+    "============================================================================",
+    "",
+    "🎯 Purpose:",
+    "Defines consistent code formatting across the entire monorepo.",
+    "Eliminates formatting debates and ensures uniform code style.",
+    "",
+    "🏛️ ADaaS Vision Alignment:",
+    "- Consistent code appearance across 1,000+ file projects",
+    "- Zero formatting-related code review comments",
+    "- IDE-agnostic formatting",
+    "============================================================================"
+  ],
+
+  "semi": true,
+  "singleQuote": true,
+  "trailingComma": "all",
+  "tabWidth": 2,
+  "useTabs": false,
+  "printWidth": 100,
+  "bracketSpacing": true,
+  "arrowParens": "always",
+  "endOfLine": "lf",
+  "quoteProps": "as-needed",
+  "jsxSingleQuote": false,
+  "bracketSameLine": false,
+  "proseWrap": "preserve",
+  "htmlWhitespaceSensitivity": "css",
+  "embeddedLanguageFormatting": "auto",
+  "singleAttributePerLine": false,
+
+  "overrides": [
+    {
+      "files": "*.md",
+      "options": {
+        "proseWrap": "always",
+        "printWidth": 80
+      }
+    },
+    {
+      "files": ["*.json", "*.jsonc"],
+      "options": {
+        "tabWidth": 2
+      }
+    },
+    {
+      "files": ["*.yaml", "*.yml"],
+      "options": {
+        "tabWidth": 2,
+        "singleQuote": false
+      }
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "name": "@struktos/sknul",
+  "version": "0.1.0-alpha.1",
+  "description": "SKNUL (Struktos Networking Ultra Link) - Next-generation networking protocol for ADaaS platform",
+  "author": "Struktos.js Team <team@struktos.dev>",
+  "license": "Apache-2.0",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:unit": "vitest run tests/unit",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist coverage .turbo"
+  },
+  "keywords": [
+    "struktos",
+    "sknul",
+    "networking",
+    "protocol",
+    "ultra-link",
+    "enterprise",
+    "typescript"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/struktos/struktos-platform.git",
+    "directory": "packages/sknul"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "@struktos/core": "workspace:*",
+    "typescript": ">=5.0.0"
+  },
+  "devDependencies": {
+    "@struktos/core": "workspace:*",
+    "@types/node": "^22.10.2",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

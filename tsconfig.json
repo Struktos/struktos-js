@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@struktos/*": ["packages/*/src"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.js", "eslint.config.js"],
+  "exclude": ["node_modules", "dist"]
+}

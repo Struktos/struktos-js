@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+
+  "_comment": [
+    "============================================================================",
+    "@struktos/core - TypeScript Configuration",
+    "============================================================================",
+    "Inherits from tsconfig.base.json and provides core-specific settings.",
+    "============================================================================"
+  ],
+
+  "extends": "../../tsconfig.base.json",
+
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "composite": true,
+    "declarationDir": "./dist",
+
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+
+  "include": ["src/**/*.ts"],
+
+  "exclude": ["node_modules", "dist", "coverage", "**/*.test.ts", "**/*.spec.ts"]
+}
