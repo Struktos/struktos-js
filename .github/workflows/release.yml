@@ -154,6 +154,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [release, github-release]
     if: failure()
+    permissions:
+      issues: write
     steps:
       - name: Send Failure Notification
         uses: actions/github-script@v7
