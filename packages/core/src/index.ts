@@ -16,17 +16,22 @@
  *   RequestContext,
  *   ContextKey,
  *   TRACE_ID_KEY,
+ *   createServiceCollection,
+ *   ServiceLifetime,
+ *   createToken,
  * } from '@struktos/core';
  *
- * // Define custom keys
- * const USER_ID = new ContextKey<number>('userId');
+ * // Define interface token
+ * interface ILogger { log(msg: string): void; }
+ * const ILogger = createToken<ILogger>('ILogger');
  *
- * // Create context scope
- * RequestContext.run({ traceId: 'abc-123' }, async () => {
- *   const ctx = RequestContext.current();
- *   ctx?.set(USER_ID, 42);
- *   console.log(ctx?.get(TRACE_ID_KEY)); // 'abc-123'
- * });
+ * // Register services
+ * const services = createServiceCollection();
+ * services.addSingleton(ILogger, ConsoleLogger);
+ *
+ * // Build and use
+ * const provider = services.build();
+ * const logger = provider.resolve(ILogger);
  * ```
  */
 
@@ -34,7 +39,7 @@
 // Domain Layer Exports
 // Pure business logic - NO external dependencies
 // ============================================================================
-//export * from './domain';
+export * from './domain';
 
 // ============================================================================
 // Application Layer Exports
@@ -46,7 +51,7 @@
 // Infrastructure Layer Exports
 // External concerns, adapters, middleware
 // ============================================================================
-//export * from './infrastructure';
+export * from './infrastructure';
 
 // ============================================================================
 // Common Exports
@@ -58,7 +63,7 @@
 // Convenience Re-exports (Most commonly used)
 // ============================================================================
 
-// Context - Most important for day-to-day usage
+// Context
 export {
   ContextKey,
   TRACE_ID_KEY,
@@ -83,6 +88,40 @@ export {
   type IPipelineBehavior,
   type IHandlerContext,
 } from './application/context';
+
+// DI - Domain types
+export {
+  type ServiceIdentifier,
+  type Constructor,
+  type IInjectableConstructor,
+  ServiceLifetime,
+  createToken,
+  type IServiceCollection,
+  type IServiceProvider,
+  type IServiceScope,
+  type IDisposable,
+  type IServiceDescriptor,
+  type ServiceFactory,
+  // Errors
+  DIError,
+  ServiceNotRegisteredError,
+  CircularDependencyError,
+  ScopeMismatchError,
+  NoActiveScopeError,
+  // Tokens
+  SERVICE_PROVIDER_TOKEN,
+  SERVICE_SCOPE_TOKEN,
+  SERVICE_SCOPE_FACTORY_TOKEN,
+} from './domain/di';
+
+// DI - Infrastructure implementations
+export {
+  ServiceCollection,
+  createServiceCollection,
+  ServiceProvider,
+  ScopedContainer,
+  withScope,
+} from './infrastructure/di';
 
 // ============================================================================
 // Version

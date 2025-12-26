@@ -8,6 +8,16 @@
  * @license Apache-2.0
  */
 
+// ============================================================================
+// Context - AsyncLocalStorage implementation
+// ============================================================================
+export * from './context';
+
+// ============================================================================
+// DI - Dependency Injection implementation
+// ============================================================================
+export * from './di';
+
 // TODO: Export infrastructure concerns
 // export * from './middleware';
 // export * from './cache';

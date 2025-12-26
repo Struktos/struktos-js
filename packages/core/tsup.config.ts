@@ -57,13 +57,11 @@ export default defineConfig({
   // ─────────────────────────────────────────────────────────────────────────
   // Banner (License Header)
   // ─────────────────────────────────────────────────────────────────────────
-  esbuildOptions(options) {
-    options.banner = {
-      js: `/**
- * @struktos/core
- * @license Apache-2.0
- * @copyright Struktos.js Team
- */`,
-    };
+  banner: {
+    js: `/**
+    * @struktos/core
+    * @license Apache-2.0
+    * @copyright Struktos.js Team
+    */`,
   },
 });

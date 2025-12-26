@@ -8,6 +8,16 @@
  * @license Apache-2.0
  */
 
+// ============================================================================
+// Context - Type-safe context propagation interfaces
+// ============================================================================
+export * from './context';
+
+// ============================================================================
+// DI - Dependency Injection interfaces and types
+// ============================================================================
+export * from './di';
+
 // TODO: Export domain entities, value objects, and interfaces
 // export * from './entities';
 // export * from './repository';

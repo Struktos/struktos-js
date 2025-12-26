@@ -10,24 +10,24 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.js"
     },
     "./domain": {
+      "types": "./dist/domain/index.d.ts",
       "import": "./dist/domain/index.mjs",
-      "require": "./dist/domain/index.js",
-      "types": "./dist/domain/index.d.ts"
+      "require": "./dist/domain/index.js"
     },
     "./application": {
+      "types": "./dist/application/index.d.ts",
       "import": "./dist/application/index.mjs",
-      "require": "./dist/application/index.js",
-      "types": "./dist/application/index.d.ts"
+      "require": "./dist/application/index.js"
     },
     "./infrastructure": {
+      "types": "./dist/infrastructure/index.d.ts",
       "import": "./dist/infrastructure/index.mjs",
-      "require": "./dist/infrastructure/index.js",
-      "types": "./dist/infrastructure/index.d.ts"
+      "require": "./dist/infrastructure/index.js"
     }
   },
   "files": [
@@ -80,6 +80,7 @@
     "typescript": ">=5.0.0"
   },
   "devDependencies": {
+    "@swc/core": "^1.15.7",
     "@types/node": "^22.10.2",
     "tsup": "^8.3.5",
     "typescript": "^5.7.2",
