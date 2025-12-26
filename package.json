@@ -19,7 +19,7 @@
   "scripts": {
     "──────────────────── BUILD ────────────────────": "",
     "build": "turbo run build",
-    "build:packages": "turbo run build --filter='./packages/*'",
+    "build:packages": "turbo run build --filter='@struktos/core'",
     "build:apps": "turbo run build --filter='./apps/*'",
     "dev": "turbo run dev",
     "──────────────────── TEST ────────────────────": "",

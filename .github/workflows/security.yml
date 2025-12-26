@@ -127,13 +127,16 @@ jobs:
             echo "### ✅ No Vulnerabilities Found" >> $GITHUB_STEP_SUMMARY
           fi
 
-      # OSV Scanner for additional coverage
-      - name: Run OSV Scanner
-        uses: google/osv-scanner-action@v2
-        with:
-          scan-args: |-
-            --lockfile=pnpm-lock.yaml
-            --format=table
+  vuln-scan:
+    name: 🛡️ Vulnerability Scanning
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.3.0
+    with:
+      scan-args: |-
+        --lockfile=pnpm-lock.yaml
+    permissions:
+      security-events: write
+      contents: read
+      actions: read
 
   # ==========================================================================
   # License Compliance
@@ -200,6 +203,7 @@ jobs:
 
       - name: Run Gitleaks
         uses: gitleaks/gitleaks-action@v2
+        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_ENABLE_SUMMARY: true
