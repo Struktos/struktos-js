@@ -1,0 +1,79 @@
+# ============================================================================
+# Setup Composite Action
+# ============================================================================
+# Purpose: Reusable setup for all CI/CD workflows
+# Features:
+#   - pnpm installation with caching
+#   - Node.js setup with version control
+#   - Turbo cache restoration
+#   - Dependency installation with frozen lockfile
+# ============================================================================
+
+name: "Setup Environment"
+description: "Setup pnpm, Node.js, and install dependencies with caching"
+
+inputs:
+  node-version:
+    description: "Node.js version to use"
+    required: false
+    default: "20"
+
+  install-deps:
+    description: "Whether to install dependencies"
+    required: false
+    default: "true"
+
+runs:
+  using: "composite"
+  steps:
+    # ==========================================================================
+    # pnpm Setup
+    # ==========================================================================
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: 9
+
+    # ==========================================================================
+    # Node.js Setup with Cache
+    # ==========================================================================
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: "pnpm"
+        registry-url: "https://registry.npmjs.org"
+
+    # ==========================================================================
+    # Turbo Cache
+    # ==========================================================================
+    # Turbo's remote caching is handled via TURBO_TOKEN env var
+    # This local cache is a fallback for when remote cache is unavailable
+
+    - name: Restore Turbo Cache
+      uses: actions/cache@v4
+      with:
+        path: .turbo
+        key: turbo-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ github.sha }}
+        restore-keys: |
+          turbo-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-
+          turbo-${{ runner.os }}-
+
+    # ==========================================================================
+    # Dependency Installation
+    # ==========================================================================
+    - name: Install Dependencies
+      if: inputs.install-deps == 'true'
+      shell: bash
+      run: pnpm install --frozen-lockfile
+
+    # ==========================================================================
+    # Environment Info
+    # ==========================================================================
+    - name: Print Environment Info
+      shell: bash
+      run: |
+        echo "📦 Node.js: $(node --version)"
+        echo "📦 pnpm: $(pnpm --version)"
+        echo "📦 TypeScript: $(pnpm exec tsc --version)"
+        echo "📦 Turbo: $(pnpm exec turbo --version)"

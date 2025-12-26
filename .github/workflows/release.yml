@@ -1,0 +1,188 @@
+# ============================================================================
+# Struktos.js Release Pipeline
+# ============================================================================
+# Purpose: Automated versioning and publishing with Changesets
+# Triggers: Push to main branch
+# Features:
+#   - Changesets-based semantic versioning
+#   - Automated PR creation for version bumps
+#   - NPM publishing with provenance
+#   - GitHub Release creation with auto-generated notes
+#   - Scoped package handling (@struktos/*)
+# ============================================================================
+
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: "Dry run (no actual publish)"
+        required: false
+        default: false
+        type: boolean
+
+# Prevent concurrent releases
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  FORCE_COLOR: 1
+
+jobs:
+  # ==========================================================================
+  # Release Job
+  # ==========================================================================
+  # Handles both version PR creation and actual publishing
+
+  release:
+    name: 🚀 Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Create releases, push tags
+      pull-requests: write # Create version PRs
+      id-token: write # NPM provenance
+    outputs:
+      published: ${{ steps.changesets.outputs.published }}
+      publishedPackages: ${{ steps.changesets.outputs.publishedPackages }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Full history needed for changelog generation
+          fetch-depth: 0
+
+      - name: Setup Environment
+        uses: ./.github/actions/setup
+
+      # ========================================================================
+      # Build All Packages
+      # ========================================================================
+      # Must build before publishing to ensure dist/ exists
+
+      - name: Build Packages
+        run: pnpm build:packages
+
+      # ========================================================================
+      # Changesets Action
+      # ========================================================================
+      # This action does two things:
+      # 1. If there are changesets: Creates a "Version Packages" PR
+      # 2. If no changesets and versions bumped: Publishes to NPM
+
+      - name: Create Release PR or Publish
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          # Command to update package versions
+          version: pnpm changeset version
+          # Command to publish packages
+          publish: pnpm release
+          # PR title and commit message
+          title: "chore(release): version packages"
+          commit: "chore(release): version packages"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # Enable NPM provenance for supply chain security
+          NPM_CONFIG_PROVENANCE: true
+
+      # ========================================================================
+      # Post-Publish Actions
+      # ========================================================================
+
+      - name: Log Published Packages
+        if: steps.changesets.outputs.published == 'true'
+        run: |
+          echo "📦 Published packages:"
+          echo '${{ steps.changesets.outputs.publishedPackages }}' | jq -r '.[] | "  - \(.name)@\(.version)"'
+
+  # ==========================================================================
+  # Create GitHub Releases
+  # ==========================================================================
+  # Creates a GitHub Release for each published package
+
+  github-release:
+    name: 📋 GitHub Release
+    runs-on: ubuntu-latest
+    needs: release
+    if: needs.release.outputs.published == 'true'
+    strategy:
+      matrix:
+        package: ${{ fromJson(needs.release.outputs.publishedPackages) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ matrix.package.name }}@${{ matrix.package.version }}
+          name: ${{ matrix.package.name }} v${{ matrix.package.version }}
+          body: |
+            ## 📦 ${{ matrix.package.name }} v${{ matrix.package.version }}
+
+            ### Installation
+
+            ```bash
+            npm install ${{ matrix.package.name }}@${{ matrix.package.version }}
+            ```
+
+            ### Links
+
+            - [NPM Package](https://www.npmjs.com/package/${{ matrix.package.name }})
+            - [Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)
+
+            ---
+
+            See the [full changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for all changes.
+          draft: false
+          prerelease: ${{ contains(matrix.package.version, 'alpha') || contains(matrix.package.version, 'beta') || contains(matrix.package.version, 'rc') }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ==========================================================================
+  # Notify on Failure
+  # ==========================================================================
+
+  notify-failure:
+    name: 🔔 Notify Failure
+    runs-on: ubuntu-latest
+    needs: [release, github-release]
+    if: failure()
+    steps:
+      - name: Send Failure Notification
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+
+            // Create an issue for release failure
+            await github.rest.issues.create({
+              owner,
+              repo,
+              title: `🚨 Release Pipeline Failed - ${new Date().toISOString().split('T')[0]}`,
+              body: `
+              ## Release Pipeline Failure
+              
+              The release pipeline failed. Please investigate.
+              
+              **Run:** [${context.runId}](https://github.com/${owner}/${repo}/actions/runs/${context.runId})
+              **Commit:** ${context.sha}
+              **Branch:** ${context.ref}
+              
+              ### Investigation Steps
+              
+              1. Check the [workflow logs](https://github.com/${owner}/${repo}/actions/runs/${context.runId})
+              2. Verify NPM_TOKEN is valid and not expired
+              3. Check for any version conflicts
+              4. Ensure all packages build successfully
+              
+              cc @${context.actor}
+              `,
+              labels: ['release', 'ci-failure', 'priority:high']
+            });

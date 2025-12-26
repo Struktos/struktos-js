@@ -1,212 +1,486 @@
-# 🏛️ Struktos.js ADaaS Platform
+<div align="center">
 
-> **A**rchitecture **D**evelopment **a**s **a** **S**ervice - 차세대 자율 운영
-> 아키텍처 플랫폼
+# 🏛️ Struktos.js
 
+### Architecture Development as a Service (ADaaS) Platform
+
+**Enterprise-grade TypeScript framework for building scalable, maintainable
+applications with Hexagonal Architecture**
+
+[![CI](https://github.com/struktos/struktos-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/struktos/struktos-platform/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/struktos/struktos-platform/branch/main/graph/badge.svg)](https://codecov.io/gh/struktos/struktos-platform)
+[![npm version](https://img.shields.io/npm/v/@struktos/core.svg)](https://www.npmjs.com/package/@struktos/core)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Node.js](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org)
-[![TypeScript](https://img.shields.io/badge/typescript-%5E5.7.0-blue.svg)](https://www.typescriptlang.org)
-[![pnpm](https://img.shields.io/badge/pnpm-%3E%3D9.0.0-orange.svg)](https://pnpm.io)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org)
+[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D18-brightgreen.svg)](https://nodejs.org)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+
+[Documentation](https://struktos.dev/docs) •
+[API Reference](https://struktos.dev/api) •
+[Examples](https://github.com/struktos/examples) •
+[Discord](https://discord.gg/struktos)
+
+</div>
 
 ---
 
-## 📐 Vision
+## 🎯 Why Struktos.js?
 
-Struktos.js는 **헥사고날 아키텍처(Hexagonal Architecture)** 원칙을 100% 준수하는
-엔터프라이즈급 Node.js 프레임워크입니다. H100 100대 규모의 AI 클러스터, 1,000만
-토큰 컨텍스트, 그리고 **SKNUL(Struktos Networking Ultra Link)** 차세대
-프로토콜을 포함한 ADaaS 플랫폼을 구축합니다.
+Modern enterprise applications demand **clean architecture**, **type safety**,
+and **scalability**. Struktos.js delivers all three by bringing proven patterns
+from Go's context propagation and C# ASP.NET's DI system to the Node.js
+ecosystem.
 
----
+### The Problem
 
-## 🗂️ Monorepo Structure
+```typescript
+// ❌ Traditional approach: Scattered context, tight coupling
+async function handleRequest(req: Request) {
+  const userId = req.headers['x-user-id']; // Manual propagation
+  const traceId = req.headers['x-trace-id']; // Error-prone
+  const db = new PostgresDatabase(); // Hard dependency
+  const logger = new ConsoleLogger(); // No abstraction
 
+  await db.query(/* ... */); // How to track? How to test?
+}
 ```
-struktos-platform/
-├── apps/                          # Production Applications
-│   ├── baas-api/                  # Backend as a Service API
-│   ├── data-engine/               # AI-powered Data Engine
-│   └── marketplace-web/           # Component Marketplace
-│
-├── packages/                      # Reusable Packages
-│   ├── core/                      # @struktos/core - Hexagonal Framework
-│   ├── sknul/                     # @struktos/sknul - SKNUL Protocol
-│   ├── cli/                       # @struktos/cli - CLI Tools
-│   ├── architecture/              # @struktos/architecture - Arch Rules
-│   ├── resilience/                # @struktos/resilience - Resilience Patterns
-│   └── shared/                    # @struktos/shared - Common Utilities
-│
-├── tools/                         # Development Tools & Scripts
-│
-├── turbo.json                     # Turborepo Configuration
-├── pnpm-workspace.yaml            # pnpm Workspace Definition
-├── tsconfig.base.json             # Shared TypeScript Config
-├── eslint.config.js               # ESLint Flat Config
-├── .dependency-cruiser.js         # Architecture Guard Rules
-└── vitest.workspace.ts            # Vitest Workspace Config
+
+### The Struktos.js Solution
+
+```typescript
+// ✅ Struktos.js: Type-safe context, decoupled architecture
+import { RequestContext, ServiceCollection, createToken } from '@struktos/core';
+
+// 1. Define interfaces (Ports)
+const IDatabase = createToken<IDatabase>('IDatabase');
+const ILogger = createToken<ILogger>('ILogger');
+
+// 2. Register implementations (Adapters)
+const services = new ServiceCollection()
+  .addSingleton(ILogger, ConsoleLogger)
+  .addScoped(IDatabase, PostgresDatabase); // Per-request isolation
+
+const container = services.build();
+
+// 3. Handle request with automatic context propagation
+app.use(async (req, res, next) => {
+  await RequestContext.run(
+    {
+      traceId: req.headers['x-trace-id'] ?? crypto.randomUUID(),
+      userId: req.user?.id,
+    },
+    async () => {
+      const scope = container.createScope();
+      try {
+        await next();
+      } finally {
+        scope.dispose(); // Automatic cleanup
+      }
+    },
+  );
+});
+
+// 4. Access context anywhere in the call stack
+class OrderService {
+  static inject = [IDatabase, ILogger] as const;
+
+  constructor(
+    private db: IDatabase,
+    private logger: ILogger,
+  ) {}
+
+  async createOrder(data: CreateOrderDTO) {
+    const ctx = RequestContext.current()!;
+    this.logger.info(
+      `[${ctx.get('traceId')}] Creating order for user ${ctx.get('userId')}`,
+    );
+    // Context automatically propagates through async boundaries!
+  }
+}
+```
+
+---
+
+## ✨ Key Features
+
+<table>
+<tr>
+<td width="50%">
+
+### 🔄 Type-Safe Context Propagation
+
+- **AsyncLocalStorage-based** request context
+- **Zero-reflection** dependency injection
+- **Automatic propagation** across async boundaries
+- **RequestContextProxy** for lazy resolution
+
+</td>
+<td width="50%">
+
+### 🏗️ Hexagonal Architecture
+
+- **Ports & Adapters** pattern enforcement
+- **Domain-centric** design
+- **Technology-agnostic** core
+- **Build-time** architecture validation
+
+</td>
+</tr>
+<tr>
+<td>
+
+### ⚡ High-Performance DI Engine
+
+- **Static inject** pattern (no decorators)
+- **Singleton/Scoped/Transient** lifecycles
+- **Circular dependency** detection
+- **Scope mismatch** validation
+
+</td>
+<td>
+
+### 🛡️ Enterprise Patterns
+
+- **Unit of Work** with auto-rollback
+- **CQRS** command/query separation
+- **Repository** pattern
+- **Specification** pattern
+
+</td>
+</tr>
+</table>
+
+---
+
+## 📦 Installation
+
+```bash
+# Using npm
+npm install @struktos/core
+
+# Using pnpm (recommended)
+pnpm add @struktos/core
+
+# Using yarn
+yarn add @struktos/core
 ```
 
 ---
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### 1. Define Your Domain Interfaces (Ports)
 
-- **Node.js** >= 18.0.0
-- **pnpm** >= 9.0.0
+```typescript
+// domain/ports/user.repository.ts
+import { createToken } from '@struktos/core';
 
-### Installation
+export interface IUserRepository {
+  findById(id: string): Promise<User | null>;
+  save(user: User): Promise<void>;
+}
+
+export const IUserRepository = createToken<IUserRepository>('IUserRepository');
+```
+
+### 2. Implement Infrastructure Adapters
+
+```typescript
+// infrastructure/repositories/prisma-user.repository.ts
+import { IUserRepository } from '../../domain/ports/user.repository';
+
+export class PrismaUserRepository implements IUserRepository {
+  static inject = [IDatabase, ILogger] as const;
+
+  constructor(
+    private db: IDatabase,
+    private logger: ILogger,
+  ) {}
+
+  async findById(id: string): Promise<User | null> {
+    return this.db.user.findUnique({ where: { id } });
+  }
+
+  async save(user: User): Promise<void> {
+    await this.db.user.upsert({
+      where: { id: user.id },
+      update: user,
+      create: user,
+    });
+  }
+}
+```
+
+### 3. Configure the DI Container
+
+```typescript
+// app/container.ts
+import { ServiceCollection } from '@struktos/core';
+
+export function configureServices() {
+  return (
+    new ServiceCollection()
+      // Singletons - Shared across all requests
+      .addSingleton(ILogger, ConsoleLogger)
+      .addSingleton(IConfig, ConfigService)
+
+      // Scoped - New instance per request
+      .addScoped(IDatabase, PrismaDatabase)
+      .addScoped(IUserRepository, PrismaUserRepository)
+      .addScoped(IUnitOfWork, PrismaUnitOfWork)
+
+      // Transient - New instance every time
+      .addTransient(IEmailService, SmtpEmailService)
+
+      // Factory registration
+      .addScopedFactory(ICurrentUser, (resolver) => {
+        const ctx = RequestContext.current();
+        return ctx?.get('user') ?? AnonymousUser;
+      })
+
+      .build({ validateScopes: true })
+  );
+}
+```
+
+### 4. Handle Requests with Context
+
+```typescript
+// main.ts
+import { RequestContext } from '@struktos/core';
+
+const container = configureServices();
+
+app.use(async (req, res, next) => {
+  await RequestContext.run(
+    {
+      traceId: req.headers['x-request-id'] ?? crypto.randomUUID(),
+      userId: req.user?.id,
+      startTime: Date.now(),
+    },
+    async () => {
+      const scope = container.createScope();
+
+      try {
+        // All services resolved within this scope share the same RequestContext
+        req.scope = scope;
+        await next();
+      } finally {
+        // Automatic cleanup: disposes all scoped services
+        // UnitOfWork auto-rollback if not committed
+        scope.dispose();
+      }
+    },
+  );
+});
+
+// In your route handler
+app.post('/orders', async (req, res) => {
+  const orderService = req.scope.resolve(OrderService);
+  const result = await orderService.createOrder(req.body);
+  res.json(result);
+});
+```
+
+---
+
+## 🏛️ Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           INFRASTRUCTURE                                 │
+│  ┌───────────────────────────────────────────────────────────────────┐  │
+│  │                          APPLICATION                               │  │
+│  │  ┌─────────────────────────────────────────────────────────────┐  │  │
+│  │  │                         DOMAIN                               │  │  │
+│  │  │                                                              │  │  │
+│  │  │  ┌─────────────┐  ┌──────────────┐  ┌──────────────────┐   │  │  │
+│  │  │  │  Entities   │  │ Value Objects│  │  Domain Events   │   │  │  │
+│  │  │  └─────────────┘  └──────────────┘  └──────────────────┘   │  │  │
+│  │  │                                                              │  │  │
+│  │  │  ┌─────────────────────────────────────────────────────┐   │  │  │
+│  │  │  │            Ports (Interfaces)                        │   │  │  │
+│  │  │  │  IUserRepository │ IOrderService │ IEventBus        │   │  │  │
+│  │  │  └─────────────────────────────────────────────────────┘   │  │  │
+│  │  └─────────────────────────────────────────────────────────────┘  │  │
+│  │                                                                    │  │
+│  │  ┌─────────────────┐  ┌──────────────┐  ┌───────────────────┐    │  │
+│  │  │   Use Cases     │  │    CQRS      │  │  DI Container     │    │  │
+│  │  │  (Commands/     │  │  Handlers    │  │  ServiceProvider  │    │  │
+│  │  │   Queries)      │  │              │  │  ScopedContainer  │    │  │
+│  │  └─────────────────┘  └──────────────┘  └───────────────────┘    │  │
+│  └───────────────────────────────────────────────────────────────────┘  │
+│                                                                          │
+│  ┌────────────────────┐  ┌──────────────────┐  ┌───────────────────┐   │
+│  │     Adapters       │  │   RequestContext │  │  External APIs    │   │
+│  │  (Repositories,    │  │  AsyncLocalStore │  │  (HTTP, gRPC,     │   │
+│  │   Controllers)     │  │  Context Proxy   │  │   Message Queue)  │   │
+│  └────────────────────┘  └──────────────────┘  └───────────────────┘   │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Core Principles
+
+| Principle                 | Description                                          | Struktos.js Implementation                  |
+| ------------------------- | ---------------------------------------------------- | ------------------------------------------- |
+| **Dependency Inversion**  | High-level modules don't depend on low-level modules | `createToken<T>()` creates interface tokens |
+| **Single Responsibility** | Each class has one reason to change                  | Separated Domain/Application/Infrastructure |
+| **Open/Closed**           | Open for extension, closed for modification          | Adapter pattern for implementations         |
+| **Interface Segregation** | Many specific interfaces over general ones           | Fine-grained service tokens                 |
+| **Liskov Substitution**   | Subtypes must be substitutable                       | Strict TypeScript interface contracts       |
+
+---
+
+## 📊 Monorepo Structure
+
+```
+struktos-platform/
+├── packages/
+│   ├── core/                    # @struktos/core
+│   │   ├── src/
+│   │   │   ├── domain/          # Pure interfaces & types
+│   │   │   │   ├── context/     # ContextKey, IContext
+│   │   │   │   └── di/          # ServiceIdentifier, IServiceProvider
+│   │   │   ├── application/     # Application services
+│   │   │   │   └── context/     # Context behaviors
+│   │   │   └── infrastructure/  # Concrete implementations
+│   │   │       ├── context/     # RequestContext, ContextProxy
+│   │   │       └── di/          # ServiceCollection, ServiceProvider
+│   │   └── tests/
+│   │       ├── unit/
+│   │       └── integration/
+│   │
+│   ├── cli/                     # @struktos/cli - Code generators
+│   ├── prisma/                  # @struktos/prisma - Prisma adapters
+│   └── adapters/                # HTTP, gRPC, Queue adapters
+│
+├── apps/
+│   ├── docs/                    # Documentation site
+│   └── examples/                # Example applications
+│
+├── turbo.json                   # Turborepo configuration
+├── pnpm-workspace.yaml          # Workspace definition
+└── .github/workflows/           # CI/CD pipelines
+```
+
+---
+
+## 🧪 Testing
 
 ```bash
-# Clone the repository
-git clone https://github.com/struktos/struktos-platform.git
-cd struktos-platform
-
-# Install dependencies
-pnpm install
-
-# Build all packages
-pnpm build
-
-# Run tests
+# Run all tests
 pnpm test
+
+# Run with coverage
+pnpm test:coverage
+
+# Run specific package tests
+pnpm --filter @struktos/core test
+
+# Watch mode
+pnpm test:watch
 ```
+
+### Coverage Requirements
+
+| Layer          | Minimum Coverage | Current   |
+| -------------- | ---------------- | --------- |
+| Domain         | 95%              | 100%      |
+| Application    | 85%              | 86.36%    |
+| Infrastructure | 80%              | 82.4%     |
+| **Overall**    | **80%**          | **82.4%** |
 
 ---
 
-## 📋 Available Scripts
+## 🛡️ Architecture Validation
 
-| Script                  | Description                 |
-| ----------------------- | --------------------------- |
-| `pnpm build`            | Build all packages and apps |
-| `pnpm build:packages`   | Build packages only         |
-| `pnpm build:apps`       | Build applications only     |
-| `pnpm dev`              | Start development mode      |
-| `pnpm test`             | Run all tests               |
-| `pnpm test:unit`        | Run unit tests              |
-| `pnpm test:integration` | Run integration tests       |
-| `pnpm test:coverage`    | Run tests with coverage     |
-| `pnpm lint`             | Lint all code               |
-| `pnpm lint:fix`         | Fix linting issues          |
-| `pnpm format`           | Format code with Prettier   |
-| `pnpm typecheck`        | TypeScript type checking    |
-| `pnpm arch:validate`    | Validate architecture rules |
-| `pnpm arch:graph`       | Generate dependency graph   |
-| `pnpm clean`            | Clean all build artifacts   |
-
----
-
-## 🏗️ Architecture Principles
-
-### Hexagonal Architecture (Ports & Adapters)
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                      INFRASTRUCTURE                              │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │                     APPLICATION                          │   │
-│  │  ┌─────────────────────────────────────────────────┐   │   │
-│  │  │                    DOMAIN                        │   │   │
-│  │  │                                                  │   │   │
-│  │  │    Entities │ Value Objects │ Domain Events     │   │   │
-│  │  │                                                  │   │   │
-│  │  └─────────────────────────────────────────────────┘   │   │
-│  │                                                          │   │
-│  │    Use Cases │ CQRS │ DI Container │ Ports (Interfaces) │   │
-│  │                                                          │   │
-│  └─────────────────────────────────────────────────────────┘   │
-│                                                                  │
-│    Adapters │ Middleware │ Repository Impl │ External APIs      │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### 5대 핵심 패턴
-
-1. **Unit of Work (UoW)** - 트랜잭션 관리
-2. **CQRS** - Command/Query Responsibility Segregation
-3. **Repository** - 데이터 액세스 추상화
-4. **Service** - 비즈니스 로직 캡슐화
-5. **Specification** - 비즈니스 규칙 표현
-
----
-
-## 🛡️ Architecture Guard
-
-Dependency Cruiser로 아키텍처 규칙을 빌드 타임에 강제합니다.
+Struktos.js enforces architectural rules at build time using
+[dependency-cruiser](https://github.com/sverweij/dependency-cruiser):
 
 ```bash
-# 아키텍처 규칙 검증
+# Validate architecture rules
 pnpm arch:validate
 
-# 의존성 그래프 생성
+# Generate dependency graph
 pnpm arch:graph
 ```
 
 ### Enforced Rules
 
-- ✅ Domain NEVER depends on Application or Infrastructure
-- ✅ Application NEVER depends on Infrastructure (concrete impl)
-- ✅ No circular dependencies between packages
-- ✅ Core package MUST NOT depend on adapters
+- ✅ **Domain** layer has ZERO external dependencies
+- ✅ **Application** depends only on Domain interfaces
+- ✅ **Infrastructure** implements Domain interfaces
+- ✅ No circular dependencies between modules
+- ✅ Scoped services cannot be injected into Singletons
 
 ---
 
-## 🧪 Testing Strategy
+## 📚 Documentation
 
-| Layer          | Test Type   | Isolation              |
-| -------------- | ----------- | ---------------------- |
-| Domain         | Unit        | 100% isolated          |
-| Application    | Unit        | Mocked infrastructure  |
-| Infrastructure | Integration | Real/Mock dependencies |
-| Apps           | E2E         | Full stack             |
-
-**Coverage Threshold:** 70% minimum (enterprise requirement)
-
----
-
-## 📦 Package Details
-
-### @struktos/core
-
-Core framework with Hexagonal Architecture support:
-
-- `IUnitOfWork`, `IUnitOfWorkFactory` - Transaction management
-- `ICommand`, `IQuery`, `ICommandHandler`, `IQueryHandler` - CQRS
-- `IServiceCollection`, `@Injectable`, `@Inject` - DI
-- `IDomainEvent`, `IEventBus` - Domain events
-- `ISpecification` - Specification pattern
-
-### @struktos/sknul
-
-**SKNUL (Struktos Networking Ultra Link)** - 차세대 네트워킹 프로토콜
-
-- H100 클러스터 최적화
-- 1,000만 토큰 컨텍스트 지원
-- 초저지연 통신
-
-### @struktos/cli
-
-CLI tool for project scaffolding:
-
-- `struktos new <project>` - Create new project
-- `struktos generate:entity` - Generate entity
-- `struktos generate:usecase` - Generate use case
+- [**Getting Started**](https://struktos.dev/docs/getting-started) - Quick start
+  guide
+- [**Core Concepts**](https://struktos.dev/docs/concepts) - RequestContext, DI,
+  Scopes
+- [**API Reference**](https://struktos.dev/api) - Full API documentation
+- [**Examples**](https://github.com/struktos/examples) - Real-world examples
+- [**Migration Guide**](https://struktos.dev/docs/migration) - Migrate from
+  other frameworks
 
 ---
 
-## 📄 License
+## 🗺️ Roadmap
 
-[Apache License 2.0](LICENSE)
+- [x] **v1.0.0-alpha.1** - Core DI + RequestContext
+- [ ] **v1.0.0-alpha.2** - CQRS + Event Bus
+- [ ] **v1.0.0-beta.1** - Prisma UnitOfWork + CLI generators
+- [ ] **v1.0.0-rc.1** - Full documentation + Examples
+- [ ] **v1.0.0** - Production release
 
 ---
 
 ## 🤝 Contributing
 
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md)
+for details.
+
+```bash
+# Fork and clone the repository
+git clone https://github.com/YOUR_USERNAME/struktos-platform.git
+
+# Install dependencies
+pnpm install
+
+# Create a branch
+git checkout -b feature/amazing-feature
+
+# Make changes and test
+pnpm test
+
+# Submit a PR
+```
 
 ---
 
-<p align="center">
-  <strong>Built with ❤️ by the Struktos.js Team</strong>
-</p>
+## 📄 License
+
+[Apache License 2.0](LICENSE) - Free for commercial use, modification,
+distribution, and private use.
+
+---
+
+## 💬 Community
+
+- [Discord](https://discord.gg/struktos) - Chat with the community
+- [GitHub Discussions](https://github.com/struktos/struktos-platform/discussions) -
+  Ask questions
+- [Twitter](https://twitter.com/struktosjs) - Follow for updates
+
+---
+
+<div align="center">
+
+**Built with ❤️ by the Struktos.js Team**
+
+[⬆ Back to Top](#-struktosjs)
+
+</div>

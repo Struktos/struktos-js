@@ -1,0 +1,278 @@
+# ============================================================================
+# Struktos.js CI Pipeline
+# ============================================================================
+# Purpose: Validate all PRs and commits to ensure code quality
+# Triggers: Pull requests, pushes to main/develop
+# Features:
+#   - Turbo cache optimization (only build/test changed packages)
+#   - Matrix testing across Node.js versions
+#   - Parallel lint, typecheck, test, build steps
+#   - Coverage reporting to Codecov
+#   - Architecture validation
+# ============================================================================
+
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+    types: [opened, synchronize, reopened]
+
+# Cancel in-progress runs for the same branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Turbo configuration
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+  # Force color output for better readability
+  FORCE_COLOR: 1
+
+jobs:
+  # ==========================================================================
+  # Detect Changed Packages
+  # ==========================================================================
+  # Uses Turbo's built-in change detection to optimize CI runtime
+
+  changes:
+    name: 🔍 Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      packages: ${{ steps.filter.outputs.packages }}
+      core: ${{ steps.filter.outputs.core }}
+      cli: ${{ steps.filter.outputs.cli }}
+      docs: ${{ steps.filter.outputs.docs }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2 # Need previous commit for comparison
+
+      - name: Check changed files
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            packages:
+              - 'packages/**'
+              - 'pnpm-lock.yaml'
+              - 'turbo.json'
+            core:
+              - 'packages/core/**'
+            cli:
+              - 'packages/cli/**'
+            docs:
+              - 'docs/**'
+              - '*.md'
+
+  # ==========================================================================
+  # Code Quality Checks (Parallel)
+  # ==========================================================================
+
+  lint:
+    name: 🧹 Lint
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.packages == 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Environment
+        uses: ./.github/actions/setup
+        # Custom composite action (defined below in separate file)
+
+      - name: Run ESLint
+        run: pnpm lint
+
+      - name: Check Formatting
+        run: pnpm format:check
+
+  typecheck:
+    name: 📘 TypeScript Check
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.packages == 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Environment
+        uses: ./.github/actions/setup
+
+      - name: Type Check
+        run: pnpm typecheck
+
+  # ==========================================================================
+  # Architecture Validation
+  # ==========================================================================
+
+  architecture:
+    name: 🏛️ Architecture Guard
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.packages == 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Environment
+        uses: ./.github/actions/setup
+
+      - name: Validate Architecture Rules
+        run: pnpm arch:validate
+
+      - name: Generate Dependency Graph
+        if: github.event_name == 'pull_request'
+        run: |
+          pnpm arch:graph
+          # Upload as artifact for review
+
+      - name: Upload Architecture Graph
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: architecture-graph
+          path: architecture-graph.svg
+          retention-days: 7
+
+  # ==========================================================================
+  # Test Matrix
+  # ==========================================================================
+  # Tests run on multiple Node.js versions to ensure compatibility
+
+  test:
+    name: 🧪 Test (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.packages == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [18, 20, 22]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "pnpm"
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Turbo caching: Only test changed packages and their dependents
+      - name: Run Tests with Coverage
+        run: pnpm test:coverage
+
+      - name: Upload Coverage to Codecov
+        if: matrix.node-version == 20 # Only upload once
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./packages/*/coverage/coverage-final.json
+          flags: unittests
+          name: struktos-coverage
+          fail_ci_if_error: false
+          verbose: true
+
+  # ==========================================================================
+  # Build Verification
+  # ==========================================================================
+  # Ensures packages build correctly before merge
+
+  build:
+    name: 🔨 Build
+    runs-on: ubuntu-latest
+    needs: [lint, typecheck, test]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Environment
+        uses: ./.github/actions/setup
+
+      # Turbo caching: Only build changed packages
+      - name: Build Packages
+        run: pnpm build:packages
+
+      - name: Verify Build Artifacts
+        run: |
+          # Check that all expected outputs exist
+          for pkg in packages/*/; do
+            if [ -f "$pkg/package.json" ]; then
+              pkg_name=$(jq -r '.name' "$pkg/package.json")
+              if [ -d "$pkg/dist" ]; then
+                echo "✅ $pkg_name: dist/ exists"
+                ls -la "$pkg/dist" | head -5
+              else
+                # Skip packages without build step
+                if jq -e '.scripts.build' "$pkg/package.json" > /dev/null 2>&1; then
+                  echo "❌ $pkg_name: dist/ missing!"
+                  exit 1
+                fi
+              fi
+            fi
+          done
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            packages/*/dist
+          retention-days: 1
+
+  # ==========================================================================
+  # PR Summary
+  # ==========================================================================
+  # Provides a summary comment on PRs
+
+  summary:
+    name: 📊 CI Summary
+    runs-on: ubuntu-latest
+    needs: [lint, typecheck, architecture, test, build]
+    if: always() && github.event_name == 'pull_request'
+    steps:
+      - name: Generate Summary
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: jobs } = await github.rest.actions.listJobsForWorkflowRun({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: context.runId,
+            });
+
+            const results = jobs.jobs
+              .filter(job => job.name !== 'CI Summary' && job.name !== '🔍 Detect Changes')
+              .map(job => {
+                const icon = job.conclusion === 'success' ? '✅' : 
+                             job.conclusion === 'failure' ? '❌' : 
+                             job.conclusion === 'skipped' ? '⏭️' : '⏳';
+                return `| ${icon} | ${job.name} | ${job.conclusion || 'running'} |`;
+              });
+
+            const summary = `
+            ## CI Pipeline Results
+
+            | Status | Job | Result |
+            |--------|-----|--------|
+            ${results.join('\n')}
+
+            ---
+            *Powered by Struktos.js CI*
+            `;
+
+            core.summary.addRaw(summary).write();
