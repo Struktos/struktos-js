@@ -8,7 +8,7 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/struktos/struktos-platform.git"
+    "url": "https://github.com/struktos/struktos-js.git"
   },
   "homepage": "https://struktos.dev",
   "engines": {
@@ -26,14 +26,14 @@
     "test": "turbo run test",
     "test:unit": "turbo run test:unit",
     "test:integration": "turbo run test:integration",
-    "test:coverage": "turbo run test:coverage",
+    "test:coverage": "turbo run test:coverage --filter=@struktos/core",
     "test:watch": "vitest",
     "──────────────────── LINT & FORMAT ────────────────────": "",
-    "lint": "turbo run lint",
+    "lint": "turbo run lint --filter=@struktos/core",
     "lint:fix": "turbo run lint:fix",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yaml,yml}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yaml,yml}\"",
-    "typecheck": "turbo run typecheck",
+    "typecheck": "turbo run typecheck --filter=@struktos/core",
     "──────────────────── ARCHITECTURE GUARD ────────────────────": "",
     "arch:validate": "depcruise --config .dependency-cruiser.js packages apps",
     "arch:graph": "depcruise --config .dependency-cruiser.js --output-type dot packages | dot -T svg > architecture-graph.svg",
@@ -44,7 +44,7 @@
     "──────────────────── RELEASE ────────────────────": "",
     "changeset": "changeset",
     "version": "changeset version",
-    "release": "turbo run build --filter='./packages/*' && changeset publish"
+    "release": "pnpm build:packages && changeset publish"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.2",
