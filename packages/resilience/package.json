@@ -1,6 +1,6 @@
 {
   "name": "@struktos/resilience",
-  "version": "0.1.0-alpha.1",
+  "version": "1.0.0",
   "description": "Resilience patterns for enterprise applications - Circuit Breaker, Retry, Bulkhead, Timeout",
   "author": "Struktos.js Team <team@struktos.dev>",
   "license": "Apache-2.0",

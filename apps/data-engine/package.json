@@ -1,6 +1,6 @@
 {
   "name": "@struktos/data-engine",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0",
   "private": true,
   "description": "Data Engine - AI-powered data processing and analytics for ADaaS platform",
   "author": "Struktos.js Team <team@struktos.dev>",
